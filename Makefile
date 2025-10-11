@@ -16,7 +16,7 @@ $(shell docker ps --format '{{.Names}}' | grep '^k3d-$(K3D_CLUSTER)-server-0$$' 
 endef
 
 .PHONY: help cluster-up cluster-down deploy reindex cron \
-        logs-web logs-index status doctor
+        logs-web logs-index logs-cron status doctor
 
 help:
 	@echo "Targets:"
@@ -27,6 +27,7 @@ help:
 	@echo "  cron             Apply hourly CronJob"
 	@echo "  logs-web         Tail zoekt-web logs"
 	@echo "  logs-index       Tail last index Job logs"
+	@echo "  logs-cron        Tail last cronjob run logs"
 	@echo "  status           Show pods/svcs/jobs + recent events"
 	@echo "  doctor           Check mounts/ports"
 
@@ -66,6 +67,9 @@ logs-web:
 
 logs-index:
 	- kubectl -n $(NS) logs job/zoekt-index -f
+
+logs-cron:
+	- kubectl -n $(NS) logs $$(kubectl -n $(NS) get jobs --sort-by=.metadata.creationTimestamp -o name | grep zoekt-index-hourly | tail -1) --tail=200
 
 status:
 	kubectl -n $(NS) get pods,svc,job,cronjob -o wide
