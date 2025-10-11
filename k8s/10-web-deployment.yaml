@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zoekt-web
+  namespace: zoekt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zoekt-web
+  template:
+    metadata:
+      labels:
+        app: zoekt-web
+    spec:
+      containers:
+        - name: web
+          image: sourcegraph/zoekt-webserver:latest
+          command: ["/usr/local/bin/zoekt-webserver"]
+          args: ["-index", "/index", "-listen", ":6070"]
+          ports:
+            - containerPort: 6070
+          volumeMounts:
+            - name: index
+              mountPath: /index
+      volumes:
+        - name: index
+          hostPath:
+            path: /index
+            type: DirectoryOrCreate

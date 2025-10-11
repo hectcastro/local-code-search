@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: zoekt-index
+  namespace: zoekt
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: indexer
+          image: sourcegraph/zoekt-indexserver:latest
+          env:
+            - { name: BRANCHES, value: "HEAD,main,master" }
+            - { name: PARALLEL, value: "8" }
+            - { name: GIT_TERMINAL_PROMPT, value: "0" }
+          volumeMounts:
+            - { name: repos, mountPath: /repos }
+            - { name: index, mountPath: /index }
+          command: ["/bin/sh", "-lc"]
+          args:
+            - |
+              set -euo pipefail
+
+              echo "🔎 Looking for git repos under /repos ..."
+              REPO_LIST="$(find /repos -type d -name .git -prune)"
+              if [ -z "$REPO_LIST" ]; then
+                echo "⚠️  No repositories found under /repos."
+                echo "    Populate ~/zoekt/repos on the host."
+                echo "    Skipping indexing."
+                exit 0
+              fi
+
+              echo "$REPO_LIST" | sed 's|/\.git$||' | sort -u > /tmp/repos.txt
+              echo "Found $(wc -l < /tmp/repos.txt) repos."
+
+              while IFS= read -r repo; do
+                echo "→ Indexing: $repo"
+                /usr/local/bin/zoekt-git-index \
+                  -index /index \
+                  -incremental \
+                  -submodules=false \
+                  -allow_missing_branches \
+                  -branches "$BRANCHES" \
+                  -parallelism "$PARALLEL" \
+                  "$repo"
+              done < /tmp/repos.txt
+
+              echo "✅ Indexing complete."
+      volumes:
+        - name: repos
+          hostPath: { path: /repos, type: DirectoryOrCreate }
+        - name: index
+          hostPath: { path: /index, type: DirectoryOrCreate }
