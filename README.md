@@ -11,20 +11,24 @@ Local deployment of [Zoekt](https://github.com/sourcegraph/zoekt), a fast trigra
 ## Quick Start
 
 ```bash
-# 1. Create k3d cluster with host directory mounts
+# 1. Configure your repositories directory (optional but recommended)
+cp .env.example .env
+# Edit .env and set HOST_REPOS to your projects directory
+
+# 2. Create k3d cluster with host directory mounts
 make cluster-up
 
-# 2. Deploy Zoekt web server
+# 3. Deploy Zoekt web server
 make deploy
 
-# 3. Clone repositories into ~/zoekt/repos/
-cd ~/zoekt/repos
-git clone https://github.com/your-org/your-repo.git
+# 4. If not using .env, clone repositories into the repos/ directory
+# cd repos/
+# git clone https://github.com/your-org/your-repo.git
 
-# 4. Index the repositories
+# 5. Index the repositories
 make reindex
 
-# 5. Access the web UI
+# 6. Access the web UI
 open http://localhost:6070
 ```
 

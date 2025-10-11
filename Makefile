@@ -8,8 +8,8 @@ K8S_DIR     ?= k8s
 NS         ?= zoekt
 HOSTPORT   ?= 6070
 
-HOST_INDEX ?= $(HOME)/zoekt/index
-HOST_REPOS ?= $(HOME)/zoekt/repos
+HOST_INDEX ?= $(CURDIR)/index
+HOST_REPOS ?= $(CURDIR)/repos
 
 define _K3D_NODE
 $(shell docker ps --format '{{.Names}}' | grep '^k3d-$(K3D_CLUSTER)-server-0$$' || true)
