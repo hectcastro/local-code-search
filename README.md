@@ -7,6 +7,7 @@ Local deployment of [Zoekt](https://github.com/sourcegraph/zoekt), a fast trigra
 - [k3d](https://k3d.io/) - Lightweight Kubernetes in Docker
 - [kubectl](https://kubernetes.io/docs/tasks/tools/) - Kubernetes CLI
 - [Docker](https://www.docker.com/) - Container runtime
+- [ghorg](https://github.com/gabrie30/ghorg) - (Optional) For cloning GitLab repositories
 
 ## Quick Start
 
@@ -21,8 +22,11 @@ make cluster-up
 # 3. Deploy Zoekt web server
 make deploy
 
-# 4. If not using .env, clone repositories into the repos/ directory
-# cd repos/
+# 4a. Clone repositories from GitLab (requires ghorg and GitLab config in .env)
+make clone-repos
+
+# 4b. Or manually clone repositories into your HOST_REPOS directory
+# cd ~/Projects  # or your HOST_REPOS path
 # git clone https://github.com/your-org/your-repo.git
 
 # 5. Index the repositories
@@ -57,6 +61,35 @@ You can still override settings via command line:
 ```bash
 make cluster-up HOST_REPOS=/different/path
 ```
+
+### Cloning repositories from GitLab
+
+Install [ghorg](https://github.com/gabrie30/ghorg) and configure GitLab settings in `.env`:
+
+```bash
+# For cloning user repositories
+GITLAB_URL=https://gitlab.com
+GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxx
+GITLAB_CLONE_TYPE=user
+GITLAB_GROUP=your-username
+
+# For cloning group repositories
+GITLAB_CLONE_TYPE=group
+GITLAB_GROUP=your-group-name
+```
+
+Then run:
+```bash
+make clone-repos
+```
+
+The `--preserve-dir` flag is used by default to maintain GitLab's nested group/subgroup structure and prevent name collisions.
+
+**Examples:**
+- Clone personal repos: `GITLAB_CLONE_TYPE=user GITLAB_GROUP=username`
+- Clone group repos: `GITLAB_CLONE_TYPE=group GITLAB_GROUP=mygroup`
+- Clone multiple: `GITLAB_GROUP="group1 group2"`
+- Clone all users: `GITLAB_CLONE_TYPE=user GITLAB_GROUP=all-users` (requires GitLab 13.0.1+)
 
 ## Troubleshooting
 

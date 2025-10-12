@@ -16,13 +16,14 @@ $(shell docker ps --format '{{.Names}}' | grep '^k3d-$(K3D_CLUSTER)-server-0$$' 
 endef
 
 .PHONY: help cluster-up cluster-down deploy reindex cron \
-        logs-web logs-index logs-cron status doctor
+        logs-web logs-index logs-cron status doctor clone-repos
 
 help:
 	@echo "Targets:"
 	@echo "  cluster-up       Create k3d cluster $(K3D_CLUSTER)"
 	@echo "  cluster-down     Delete k3d cluster $(K3D_CLUSTER)"
 	@echo "  deploy           Apply NS/deploy/svc and wait for UI"
+	@echo "  clone-repos      Clone GitLab group repos to HOST_REPOS using ghorg"
 	@echo "  reindex          Run one-shot indexing Job (incremental)"
 	@echo "  cron             Apply hourly CronJob"
 	@echo "  logs-web         Tail zoekt-web logs"
@@ -91,3 +92,7 @@ doctor:
 	fi
 	@echo "• Service reachable?"
 	- kubectl -n $(NS) get svc zoekt-web -o wide
+
+clone-repos:
+	@[ -d "$(HOST_REPOS)" ] || mkdir -p "$(HOST_REPOS)"
+	./scripts/clone-repos.sh
