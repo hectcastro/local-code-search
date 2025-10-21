@@ -73,8 +73,8 @@ GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxx
 GITLAB_CLONE_TYPE=user
 GITLAB_GROUP=your-username
 
-# For cloning group repositories
-GITLAB_CLONE_TYPE=group
+# For cloning group repositories (use 'org' for groups in ghorg)
+GITLAB_CLONE_TYPE=org
 GITLAB_GROUP=your-group-name
 ```
 
@@ -87,7 +87,7 @@ The `--preserve-dir` flag is used by default to maintain GitLab's nested group/s
 
 **Examples:**
 - Clone personal repos: `GITLAB_CLONE_TYPE=user GITLAB_GROUP=username`
-- Clone group repos: `GITLAB_CLONE_TYPE=group GITLAB_GROUP=mygroup`
+- Clone group repos: `GITLAB_CLONE_TYPE=org GITLAB_GROUP=mygroup`
 - Clone multiple: `GITLAB_GROUP="group1 group2"`
 - Clone all users: `GITLAB_CLONE_TYPE=user GITLAB_GROUP=all-users` (requires GitLab 13.0.1+)
 

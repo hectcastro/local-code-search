@@ -5,7 +5,7 @@ set -euo pipefail
 GITLAB_URL="${GITLAB_URL:-https://gitlab.com}"
 GITLAB_TOKEN="${GITLAB_TOKEN:-}"
 GITLAB_GROUP="${GITLAB_GROUP:-}"
-GITLAB_CLONE_TYPE="${GITLAB_CLONE_TYPE:-group}"
+GITLAB_CLONE_TYPE="${GITLAB_CLONE_TYPE:-org}"
 GHORG_CLONE_OPTS="${GHORG_CLONE_OPTS:---preserve-dir}"
 
 validate_requirements() {
@@ -16,7 +16,6 @@ validate_requirements() {
 
     if [[ -z "$GITLAB_URL" ]]; then
         echo "Error: GITLAB_URL environment variable is not set"
-        echo "Example: export GITLAB_URL=https://gitlab.com"
         exit 1
     fi
 
@@ -28,9 +27,8 @@ validate_requirements() {
 
     if [[ -z "$GITLAB_GROUP" ]]; then
         echo "Error: GITLAB_GROUP environment variable is not set"
-        echo "For groups: export GITLAB_GROUP='mygroup mygroup2'"
+        echo "For groups: export GITLAB_GROUP='mygroup mygroup2' and GITLAB_CLONE_TYPE='org'"
         echo "For users: export GITLAB_GROUP='username' and GITLAB_CLONE_TYPE='user'"
-        echo "For all users: export GITLAB_GROUP='all-users' and GITLAB_CLONE_TYPE='user'"
         exit 1
     fi
 
