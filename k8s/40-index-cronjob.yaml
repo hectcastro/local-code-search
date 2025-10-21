@@ -25,6 +25,85 @@ spec:
                 - |
                   set -euo pipefail
 
+                  normalize_git_remote() {
+                    remote="$1"
+                    scheme="https"
+                    host=""
+                    path=""
+
+                    case "$remote" in
+                      git@*:* )
+                        host=${remote#git@}
+                        host=${host%%:*}
+                        path=${remote#*:}
+                        ;;
+                      https://* )
+                        rest=${remote#https://}
+                        case "$rest" in
+                          *@* )
+                            rest=${rest#*@}
+                            ;;
+                        esac
+                        host=${rest%%/*}
+                        if [ "$rest" != "$host" ]; then
+                          path=${rest#*/}
+                        fi
+                        ;;
+                      * )
+                        return 1
+                        ;;
+                    esac
+
+                    if [ -z "$host" ]; then
+                      return 1
+                    fi
+
+                    path=${path%.git}
+                    path=${path#/}
+                    path=${path%/}
+
+                    normalized="$scheme://$host"
+                    if [ -n "$path" ]; then
+                      normalized="$normalized/$path"
+                    fi
+
+                    printf "%s\n" "${normalized%/}"
+                  }
+
+                  configure_gitlab_repo() {
+                    repo_dir="$1"
+                    remote="$(git -C "$repo_dir" config --get remote.origin.url 2>/dev/null || true)"
+                    if [ -z "$remote" ]; then
+                      return
+                    fi
+
+                    normalized="$(normalize_git_remote "$remote")" || return
+                    rest="${normalized#*://}"
+                    host="${rest%%/*}"
+                    if [ "$rest" = "$host" ]; then
+                      repo_name="$host"
+                    else
+                      repo_name="$rest"
+                    fi
+
+                    case "$host" in
+                      gitlab.*|*.gitlab.*)
+                        current_url="$(git -C "$repo_dir" config --get zoekt.web-url 2>/dev/null || true)"
+                        if [ "$current_url" != "$normalized" ]; then
+                          git -C "$repo_dir" config zoekt.web-url "$normalized"
+                        fi
+                        current_type="$(git -C "$repo_dir" config --get zoekt.web-url-type 2>/dev/null || true)"
+                        if [ "$current_type" != "gitlab" ]; then
+                          git -C "$repo_dir" config zoekt.web-url-type gitlab
+                        fi
+                        current_name="$(git -C "$repo_dir" config --get zoekt.name 2>/dev/null || true)"
+                        if [ "$current_name" != "$repo_name" ]; then
+                          git -C "$repo_dir" config zoekt.name "$repo_name"
+                        fi
+                        ;;
+                    esac
+                  }
+
                   echo "🔎 Looking for git repos under /repos ..."
                   REPO_LIST="$(find /repos -type d -name .git -prune)"
                   if [ -z "$REPO_LIST" ]; then
@@ -39,6 +118,7 @@ spec:
 
                   while IFS= read -r repo; do
                     echo "→ Indexing: $repo"
+                    configure_gitlab_repo "$repo"
                     /usr/local/bin/zoekt-git-index \
                       -index /index \
                       -incremental \
